@@ -1,0 +1,49 @@
+version: "3"
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./conf/prometheus:/etc/prometheus
+      - prometheus_storage:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "9090:9090"
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    ports:
+      - "8083:8083"
+      - "8086:8086"
+      - "8090:8090"
+    env_file:
+      - 'conf/influxdb/env.influxdb'
+    volumes:
+      - ./data/influxdb:/var/lib/influxdb
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    env_file:
+      - 'conf/grafana/env.grafana'
+    links:
+      - influxdb
+      - prometheus
+    volumes:
+      - grafana_storage:/var/lib/grafana
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+volumes:
+  grafana_storage:
+  prometheus_storage:
+
